@@ -1,51 +1,183 @@
 # Image Resize for ComfyUI
 
-This custom node provides various tools for resizing images. The goal is resizing without distorting proportions, yet without having to perform any calculations with the size of the original image. If a mask is present, it is resized and modified along with the image.
+A powerful and flexible ComfyUI custom node for resizing images without distorting proportions. This node eliminates the need for manual calculations—simply specify your target size and let the node handle the rest. Built-in support for optional mask handling ensures that masks are resized and modified in sync with images.
 
-![A ComfyUI node titled “Image resize” with inputs pixels and mask_optional, outputs IMAGE and MASK as well as a variety of widgets: action, smaller_side, larger_side, scale_factor, resize_mode, side_ratio, crop_pad_position, pad_feathering](image_resize.png)
+![A ComfyUI node titled "Image resize" with inputs pixels and mask_optional, outputs IMAGE and MASK as well as a variety of widgets: action, smaller_side, larger_side, scale_factor, resize_mode, side_ratio, crop_pad_position, pad_feathering](image_resize.png)
+
+## Features
+
+- **Aspect Ratio Preservation**: Resize images while maintaining their original aspect ratio
+- **Three Resize Modes**: Choose between resize-only, crop-to-ratio, or pad-to-ratio operations
+- **Flexible Sizing Options**: Use smaller_side, larger_side, or scale_factor for intuitive control
+- **Smart Resize Modes**: Reduce-only, increase-only, or unrestricted resizing
+- **Mask Support**: Optional mask input is automatically resized and transformed alongside the image
+- **Precision Cropping/Padding**: Fine-tune crop and pad positions with pixel-level control
+- **Feathering Support**: Smooth mask transitions to prevent visible borders during inpainting
 
 ## Installation
 
-To install, clone this repository into `ComfyUI/custom_nodes` folder with `git clone https://github.com/palant/image-resize-comfyui` and restart ComfyUI.
+Clone this repository into your `ComfyUI/custom_nodes` directory:
 
-## Node configuration
+```bash
+cd ComfyUI/custom_nodes
+git clone https://github.com/ussoewwin/image-resize-comfyui
+cd image-resize-comfyui
+```
 
-### action
+Then restart ComfyUI.
 
-In the `resize only` mode, the image will only be resized while keeping its side ratio. The `side_ratio` setting is ignored then.
+## Node Configuration
 
-In the `crop to ratio` mode, parts of the image will be removed after resizing as necessary to make its side ratio match `side_ratio` setting.
+### `action`
 
-In the `pad to ratio` mode, transparent padding will be added to the image after resizing as necessary to make its side ratio match `side_ratio` setting.
+Determines how the node processes the image after resizing:
 
-### smaller_side, larger_side, scale_factor
+- **`resize only`**: Image is resized while keeping its aspect ratio. The `side_ratio` setting is ignored.
+- **`crop to ratio`**: After resizing, parts of the image are removed to match the target `side_ratio`. Useful for enforcing specific aspect ratios.
+- **`pad to ratio`**: After resizing, transparent padding is added to match the target `side_ratio`. Original image content is always preserved.
 
-These settings determine the image’s target size. Only one of these settings can be enabled (set to a non-zero value).
+### `smaller_side`, `larger_side`, `scale_factor`
 
-With `smaller_side` set, the target size is determined by the smaller side of the image. E.g. with the `action` being `resize only` and the original image being 512x768 pixels large, `smaller_side` set to 1024 will resize the image to 1024x1536 pixels.
+Only one of these can be active (set to a non-zero value). They determine the target size:
 
-With `larger_side` set, the target size is determined by the larger side of the image. E.g. with the `action` being `resize only` and the original image being 512x768 pixels large, `larger_side` set to 1024 will resize the image to 683x1024 pixels.
+#### `smaller_side` (Integer, 0-8192)
+The smaller dimension of the image will be resized to this value.
 
-Finally, `scale_factor` can be set as an explicit scaling factor. Values below 1.0 will reduce image size, above 1.0 increase it.
+**Example**: Original image 512×768 px, `smaller_side=1024` → Result: 1024×1536 px
 
-If neither setting is set, the image is not resized but merely cropped/padded as necessary.
+#### `larger_side` (Integer, 0-8192)
+The larger dimension of the image will be resized to this value.
 
-### resize_mode
+**Example**: Original image 512×768 px, `larger_side=1024` → Result: 683×1024 px
 
-In the `reduce size only` mode, images already smaller than the target size will not be resized. In the `increase size only` mode, images already larger than the target size will not be resized. The `any` mode causes the image to be always resized, regardless of whether downscaling or upscaling is required.
+#### `scale_factor` (Float, 0.0-10.0)
+Direct scaling multiplier.
 
-### side_ratio
+- `< 1.0`: Downscaling
+- `> 1.0`: Upscaling
+- `= 0.0`: No scaling, only crop/pad as needed
 
-If the `action` setting enables cropping or padding of the image, this setting determines the required side ratio of the image. The format is `width:height`, e.g. `4:3` or `2:3`.
+If all values are zero, the image is not resized but only cropped/padded as necessary.
 
-In case you want to resize the image to an explicit size, you can also set this size here, e.g. `512:768`. You then set `smaller_side` setting to `512` and the resulting image will always be 512x768 pixels large.
+### `resize_mode`
 
-### crop_pad_position
+Controls which direction resizing is applied:
 
-If the image is cropped, this setting determines which side is cropped. The value `0.0` means that only the right/bottom side is cropped. The value `1.0` means that only left/top side is cropped. The value `0.3` means that 30% are being cropped on the left/top side and 70% on the right/top side.
+- **`reduce size only`**: Images already smaller than the target size will not be resized. Only downscaling occurs.
+- **`increase size only`**: Images already larger than the target size will not be resized. Only upscaling occurs.
+- **`any`**: Images are always resized to match the target, regardless of direction.
 
-If the image is padded, this setting determines where the padding is being inserted. The value `0.0` means that all padding is inserted on the right/bottom side. The value `1.0` means that all padding is inserted on the left/top side. The value `0.3` means that 30% of the padding are inserted on the left/top side and 70% on the right/top side.
+### `side_ratio` (String, default: "4:3")
 
-### pad_feathering
+Sets the target aspect ratio when using `crop to ratio` or `pad to ratio` actions.
 
-If the image is padded, this setting causes mask transparency to partially expand into the original image for the given number of pixels. This helps avoid borders if the image is later inpainted.
+**Format**: `width:height`
+
+**Examples**:
+- `4:3` – Standard aspect ratio
+- `16:9` – Widescreen
+- `1:1` – Square
+- `512:768` – Explicit dimensions (when combined with `smaller_side=512`, always produces 512×768 px)
+
+### `crop_pad_position` (Float, 0.0-1.0, default: 0.5)
+
+Controls where cropping or padding occurs:
+
+- `0.0`: All removal/addition on the right/bottom side
+- `0.5`: Centered (even on both sides)
+- `1.0`: All removal/addition on the left/top side
+- `0.3`: 30% on left/top, 70% on right/bottom
+
+**For Cropping**: Determines which parts are removed.
+**For Padding**: Determines where transparent padding is inserted.
+
+### `pad_feathering` (Integer, 0-8192, default: 20)
+
+When padding is applied, this setting gradually expands mask transparency into the original image by the specified number of pixels. This helps avoid visible borders when the padded image is later used in inpainting operations.
+
+- `0`: No feathering (hard edge)
+- `20`: Smooth transition over 20 pixels (default)
+- Higher values: Wider feathering range
+
+## Inputs
+
+- **`pixels`** (IMAGE): The input image to resize
+- **`mask_optional`** (MASK, optional): An optional mask that will be resized alongside the image
+
+## Outputs
+
+- **`IMAGE`**: The resized (and optionally cropped/padded) image
+- **`MASK`**: The resized mask (or generated mask if input was None)
+
+## Usage Examples
+
+### Example 1: Upscale to 1024px minimum dimension
+```
+action: resize only
+smaller_side: 1024
+resize_mode: any
+side_ratio: 4:3 (ignored in resize only mode)
+```
+
+### Example 2: Create square images by cropping
+```
+action: crop to ratio
+smaller_side: 512
+side_ratio: 1:1
+crop_pad_position: 0.5 (center crop)
+resize_mode: any
+```
+
+### Example 3: Create 16:9 images by padding
+```
+action: pad to ratio
+larger_side: 1024
+side_ratio: 16:9
+crop_pad_position: 0.5 (center padding)
+pad_feathering: 30 (smooth edge transition)
+resize_mode: any
+```
+
+### Example 4: Scale to exact size
+```
+action: resize only
+smaller_side: 512
+scale_factor: 0 (disabled)
+resize_mode: any
+side_ratio: 512:768 (stored for reference)
+```
+Then set `smaller_side=512` and `side_ratio=512:768` together for precise dimensions.
+
+## Technical Details
+
+- **Interpolation**: Uses bicubic interpolation with anti-aliasing for high-quality resizing
+- **GPU Acceleration**: Fully compatible with CUDA and CPU fallback
+- **Data Format**: Works with PyTorch tensors and maintains float32 precision
+- **Mask Handling**: Masks are resized independently and clamped to [0.0, 1.0] range
+- **Validation**: Comprehensive input validation with clear error messages
+
+## License
+
+MIT License - See LICENSE file for details
+
+## Credits
+
+Created by Wladimir Palant
+
+## Changelog
+
+### v1.0.0
+- Initial release
+- Support for three resize actions (resize, crop, pad)
+- Flexible sizing options (smaller_side, larger_side, scale_factor)
+- Three resize modes (reduce only, increase only, any)
+- Mask support with feathering
+- Comprehensive parameter validation
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit issues and pull requests.
+
+## Support
+
+For issues, questions, or suggestions, please open an issue on the GitHub repository.

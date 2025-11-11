@@ -1,9 +1,11 @@
 import torch
+import torch.nn.functional as F
+import numpy as np
+from PIL import Image
 
-class ImageResize:
+class ImageResizeAdvanced:
     def __init__(self):
         pass
-
 
     ACTION_TYPE_RESIZE = "resize only"
     ACTION_TYPE_CROP = "crop to ratio"
@@ -14,7 +16,6 @@ class ImageResize:
     RETURN_TYPES = ("IMAGE", "MASK",)
     FUNCTION = "resize"
     CATEGORY = "image"
-
 
     @classmethod
     def INPUT_TYPES(s):
@@ -35,25 +36,21 @@ class ImageResize:
             },
         }
 
-
     @classmethod
     def VALIDATE_INPUTS(s, action, smaller_side, larger_side, scale_factor, resize_mode, side_ratio, **_):
         if side_ratio is not None:
             if action != s.ACTION_TYPE_RESIZE and s.parse_side_ratio(side_ratio) is None:
                 return f"Invalid side ratio: {side_ratio}"
 
-        if smaller_side is not None and larger_side is not None and scale_factor is not None:
-            if int(smaller_side > 0) + int(larger_side > 0) + int(scale_factor > 0) > 1:
-                return f"At most one scaling rule (smaller_side, larger_side, scale_factor) should be enabled by setting a non-zero value"
+        if int(smaller_side > 0) + int(larger_side > 0) + int(scale_factor > 0) > 1:
+            return f"At most one scaling rule (smaller_side, larger_side, scale_factor) should be enabled by setting a non-zero value"
 
-        if scale_factor is not None:
-            if resize_mode == s.RESIZE_MODE_DOWNSCALE and scale_factor > 1.0:
-                return f"For resize_mode {s.RESIZE_MODE_DOWNSCALE}, scale_factor should be less than one but got {scale_factor}"
-            if resize_mode == s.RESIZE_MODE_UPSCALE and scale_factor > 0.0 and scale_factor < 1.0:
-                return f"For resize_mode {s.RESIZE_MODE_UPSCALE}, scale_factor should be larger than one but got {scale_factor}"
+        if resize_mode == s.RESIZE_MODE_DOWNSCALE and scale_factor > 1.0:
+            return f"For resize_mode {s.RESIZE_MODE_DOWNSCALE}, scale_factor should be less than one but got {scale_factor}"
+        if resize_mode == s.RESIZE_MODE_UPSCALE and scale_factor > 0.0 and scale_factor < 1.0:
+            return f"For resize_mode {s.RESIZE_MODE_UPSCALE}, scale_factor should be larger than one but got {scale_factor}"
 
         return True
-
 
     @classmethod
     def parse_side_ratio(s, side_ratio):
@@ -64,7 +61,6 @@ class ImageResize:
             return float(x) / float(y)
         except:
             return None
-
 
     def resize(self, pixels, action, smaller_side, larger_side, scale_factor, resize_mode, side_ratio, crop_pad_position, pad_feathering, mask_optional=None):
         validity = self.VALIDATE_INPUTS(action, smaller_side, larger_side, scale_factor, resize_mode, side_ratio)
@@ -153,11 +149,10 @@ class ImageResize:
 
         return (pixels, mask)
 
-
 NODE_CLASS_MAPPINGS = {
-    "ImageResize": ImageResize
+    "ImageResizeAdvanced": ImageResizeAdvanced
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "ImageResize": "Image Resize"
+    "ImageResizeAdvanced": "Image Resize Advanced"
 }
