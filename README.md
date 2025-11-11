@@ -1,10 +1,10 @@
 # Image Resize for ComfyUI
 
 This repository is a **direct fork and continuation** of the archived project [`palant/image-resize-comfyui`](https://github.com/palant/image-resize-comfyui).  
-- Original creator: **Wladimir Palant** (MIT License, archived on 2024-05-11).  
-- Fork maintainer: **ussoewwin/image_resize_comfyui** — kept in sync with current ComfyUI releases, with packaging/docs refreshed so it keeps working today.
+- Original creator: **Wladimir Palant** (MIT License, archived on 2024-05-11 and now read-only).  
+- Fork maintainer: **ussoewwin/image_resize_comfyui** — actively updated for ComfyUI 2024+ releases, with refreshed packaging/docs and regular compatibility testing.
 
-Like the upstream project, it delivers a powerful ComfyUI node for resizing images without distorting proportions. This fork focuses on keeping the code compatible with modern ComfyUI builds while preserving the original behavior. Optional mask handling remains fully supported, so masks stay aligned with the resized image.
+Like the upstream project, it delivers a powerful ComfyUI node for resizing images without distorting proportions. This fork continues the exact feature set while ensuring it remains drop-in compatible with current ComfyUI builds. Optional mask handling remains fully supported, so masks stay aligned with the resized image. Any future fixes or enhancements will be contributed here while honoring the original design.
 
 ![A ComfyUI node titled "Image resize" with inputs pixels and mask_optional, outputs IMAGE and MASK as well as a variety of widgets: action, smaller_side, larger_side, scale_factor, resize_mode, side_ratio, crop_pad_position, pad_feathering](image_resize.png)
 
